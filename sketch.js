@@ -47,15 +47,17 @@ function setup() {
     colorMode(HSB, 360, 100, 100, 100)
     background(0, 0, 30)
 
-    a = new p5.Vector(width/4, height*3/4)
+    a = new p5.Vector(width/4, height/2)
     b = new p5.Vector(width/2, height/4)
-    c = new p5.Vector(width*3/4, height*3/4)
+    c = new p5.Vector(width*3/4, height/2)
 
     // I didn't know we could initialize the value!!
     mouseX = width/2
 }
 
 function draw() {
+    b.x = mouseX
+    b.y = mouseY
     quadratic_example()
     cubic_example()
 }
@@ -75,14 +77,19 @@ function quadratic_example() {
     /* TODO z-index order notes
         the blue circles should be under the white ones
         the blue lines should disappear as t approaches 0 and 1
+            this will happen if they are under!
      */
 
     // for some reason, we have to constrain the mouse
     // otherwise p5.js allows us to move our mouse off the canvas
-    mouseX = constrain(mouseX, a.x, c.x)
+    // mouseX = constrain(mouseX, a.x, c.x)
+    mouseX = constrain(mouseX, 0, width)
 
     // main time control for our bezier curve
-    let t = map(mouseX, a.x, c.x, 0, 1)
+    // let t = map(mouseX, a.x, c.x, 0, 1)
+    // let t = map(mouseX, 0, width, 0, 1)
+
+    t = abs(sin(frameCount * 0.01))
     d = p5.Vector.lerp(a, b, t)
     e = p5.Vector.lerp(b, c, t)
     f = p5.Vector.lerp(d, e, t)
