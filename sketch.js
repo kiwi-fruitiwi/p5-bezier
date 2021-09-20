@@ -6,12 +6,10 @@ We are exploring Bezier curves with Daniel!
 https://www.youtube.com/watch?v=enNfb6p3j_g
 
 We learned about lerp too!
-
 lerp(x₀, x₁, t)
-
-winry: x₀ + x₁*t
-cody: x₀*t+x₁(1-t) » x₁*t+x₀(1-t)
-kiwi: (x₁-x₀)*t + x₀
+    winry: x₀ + x₁*t, oops
+    cody: x₀*t+x₁(1-t) » x₁*t+x₀(1-t), weighted average form
+    kiwi: (x₁-x₀)*t + x₀, initial + difference form
 
 goal: clone Freya's lerp animation https://youtu.be/aVwxzDHniEw?t=21
     white circles are major vertices
@@ -47,12 +45,12 @@ function setup() {
     colorMode(HSB, 360, 100, 100, 100)
     background(0, 0, 30)
 
+    // I didn't know we could initialize the value!!
+    mouseX = width/2
+
     a = new p5.Vector(width/4, height/2)
     b = new p5.Vector(width/2, height/4)
     c = new p5.Vector(width*3/4, height/2)
-
-    // I didn't know we could initialize the value!!
-    mouseX = width/2
 }
 
 function draw() {
@@ -68,11 +66,17 @@ function cubic_example() {
 
 }
 
+// test
+function test() {
+    console.log("test")
+}
+
 
 // encapsulates the visualization of our quadratic bezier curve
 function quadratic_example() {
     let bg = color(0, 0, 25)
     background(bg)
+    noFill()
 
     /* TODO z-index order notes
         the blue circles should be under the white ones
@@ -88,51 +92,48 @@ function quadratic_example() {
     // main time control for our bezier curve
     // let t = map(mouseX, a.x, c.x, 0, 1)
     // let t = map(mouseX, 0, width, 0, 1)
-
-    t = abs(sin(frameCount * 0.01))
+    let t = abs(sin(frameCount * 0.01))
     d = p5.Vector.lerp(a, b, t)
     e = p5.Vector.lerp(b, c, t)
     f = p5.Vector.lerp(d, e, t)
 
-    noFill()
-
-    // we want the blue 2nd order lerp lines to be under the
-    // 1st order gray
-    stroke(200, 100, 80) // blue
-    line(d.x, d.y, e.x, e.y)
-
     // draw lines first so they are underneathe the vertices
+    // we want the blue 2nd order blue lerp line to be under the
+    // 1st order gray lines
+    stroke(200, 100, 80) // blue
+    line(d.x, d.y, e.x, e.y) // a line between d and e
+
     stroke(0, 0, 60) // gray
     line(a.x, a.y, b.x, b.y)
     line(b.x, b.y, c.x, c.y)
 
-
-    strokeWeight(2)
+    strokeWeight(2) // vertex strokeWeight
     // a blue circle for each vertex d, e
-    // a line between them
     fill(bg)
 
-    // if t is close to 0 or 1, reduce the line's alpha to 0
-    // let blue_line_alpha = map(abs(t-0.5), 0, 0.5, 100, 0)
-
+    // finally, draw all the vertex circles
+    // blue vertices for d, e
     stroke(200, 100, 80)
     circle(d.x, d.y, 10)
     circle(e.x, e.y, 10)
 
-    // draw a path for our curve
+    // draw a path for our curve. this should be 2nd highest in z-order
+    // this has to come after vertices d and e to stay above them :P
     strokeWeight(3)
     stroke(0, 0, 100) // white
-    // s is the t value inside this loop, going from 0 up to t itself
+    // s is the time value inside this loop,
+    // going from 0 up to t itself
     for (let s=0; s<=t; s+=0.001) {
+        // f is our main drawing point for the quadratic bezier curve
+        // here, the v returned is equal to f
         let v = quadratic(a, b, c, s)
         point(v.x, v.y)
     }
 
-    // f is our main drawing point for the quadratic bezier curve
+    // these are the highest z-index values
     stroke(0, 0, 100) // white
     circle(f.x, f.y, 12)
 
-    // a circle for each vertex a, b, c
     fill(bg)
     strokeWeight(2)
     circle(a.x, a.y, 10)

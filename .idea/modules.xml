@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/p5-bezier.iml" filepath="$PROJECT_DIR$/.idea/p5-bezier.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/p5-dragndrop.iml" filepath="$PROJECT_DIR$/.idea/p5-dragndrop.iml" />
     </modules>
   </component>
 </project>
