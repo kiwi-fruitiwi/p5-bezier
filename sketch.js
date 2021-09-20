@@ -23,7 +23,56 @@ goal: clone Freya's lerp animation https://youtu.be/aVwxzDHniEw?t=21
     quadratic example
         p0, p2 are equilateral triangle bottoms
         p1 is width/2, height/4
+
+add draggable vertices
  */
+
+// if I knew more javascript, this should probably inherit from p5.Vector?
+// as is, I suppose we should return a vector and make sure there's no
+// mutability problems
+class DraggableVertex {
+    // contains a p5.Vector as its internal representation
+    constructor(x, y) {
+        this.v = new p5.Vector(x, y)
+        this.r = 5
+
+        this.offsetX = 0
+        this.offsetY = 0
+        this.dragging = false
+    }
+
+    // x, y parameters are the coordinates of the mouse while dragging
+    show(x, y) {
+        if (this.dragging) {
+            this.v.x = x - this.offsetX
+            this.v.y = y - this.offsetY
+        }
+
+        stroke(0, 0, 100) // white
+        strokeWeight(2)
+
+        circle(this.v.x, this.v.y, this.r*2)
+    }
+
+    pressed(x, y) {
+        // this is a contains check. Is the mouse at (mx, my) within the
+        // boundary of our rectangle?
+        if (this.contains(x, y)) {
+            this.dragging = true
+            this.offsetX = x - this.v.x
+            this.offsetY = y - this.v.y
+        }
+    }
+
+    notPressed(x, y) {
+        this.dragging = false
+    }
+
+    // returns true if the point's distance from our center is < our radius
+    contains(x, y) {
+        return (dist(this.v.x, this.v.y, x, y) <= this.r)
+    }
+}
 
 
 let font
@@ -34,7 +83,11 @@ let points = []
 // d is the result of lerp between a, b
 // e is the result of lerp between b, c
 // f is the lerp between d and e
-let a, b, c, d, e, f
+let A, B, C // these are DraggableVertex objects that contain p5.Vector
+let d, e, f // these are p5.Vector objects
+
+// list of DraggableVertices
+let draggableVertices
 
 function preload() {
     font = loadFont('fonts/Meiryo-01.ttf')
@@ -48,16 +101,14 @@ function setup() {
     // I didn't know we could initialize the value!!
     mouseX = width/2
 
-    a = new p5.Vector(width/4, height/2)
-    b = new p5.Vector(width/2, height/4)
-    c = new p5.Vector(width*3/4, height/2)
+    A = new DraggableVertex(width/4, height/2)
+    B = new DraggableVertex(width/2, height/4)
+    C = new DraggableVertex(width*3/4, height/2)
+    draggableVertices = [A, B, C]
 }
 
 function draw() {
-    b.x = mouseX
-    b.y = mouseY
     quadratic_example()
-    cubic_example()
 }
 
 
@@ -69,6 +120,14 @@ function cubic_example() {
 // test
 function test() {
     console.log("test")
+}
+
+function mousePressed() {
+    draggableVertices.forEach(dv => dv.pressed(mouseX, mouseY))
+}
+
+function mouseReleased() {
+    draggableVertices.forEach(dv => dv.notPressed())
 }
 
 
@@ -88,11 +147,16 @@ function quadratic_example() {
     // otherwise p5.js allows us to move our mouse off the canvas
     // mouseX = constrain(mouseX, a.x, c.x)
     mouseX = constrain(mouseX, 0, width)
+    mouseY = constrain(mouseY, 0, height)
 
     // main time control for our bezier curve
     // let t = map(mouseX, a.x, c.x, 0, 1)
     // let t = map(mouseX, 0, width, 0, 1)
     let t = abs(sin(frameCount * 0.01))
+    let a, b, c // temporary p5.Vector variables to hold DraggableVertex
+    a = A.v
+    b = B.v
+    c = C.v
     d = p5.Vector.lerp(a, b, t)
     e = p5.Vector.lerp(b, c, t)
     f = p5.Vector.lerp(d, e, t)
@@ -135,10 +199,9 @@ function quadratic_example() {
     circle(f.x, f.y, 12)
 
     fill(bg)
-    strokeWeight(2)
-    circle(a.x, a.y, 10)
-    circle(b.x, b.y, 10)
-    circle(c.x, c.y, 10)
+    A.show(mouseX, mouseY)
+    B.show(mouseX, mouseY)
+    C.show(mouseX, mouseY)
 }
 
 // receives 3 points, and returns a point on the quadratic
