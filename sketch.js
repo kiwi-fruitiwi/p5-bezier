@@ -25,6 +25,29 @@ goal: clone Freya's lerp animation https://youtu.be/aVwxzDHniEw?t=21
         p1 is width/2, height/4
 
 add draggable vertices
+TODO: add "try dragging the white vertices" message
+TODO: add hover to DraggableVertices
+TODO: overlapping DraggableVertices should only drag top-most vertex
+
+done
+    added quadratic setup
+    refactored variable names from a,b,c,d,e to A,B,C,D,E -> ab, bc, cd -> ab_bc
+
+
+version comments draft
+    bezier function to make mouse-controllable control point, cubic
+    implementing lerp from scratch: one dimension (number line)
+    quadratic lerp method: 3 lerp calls between 3 points
+    cubic lerp method
+        begin +end shape
+    bezier lerp mesh with t
+    refactor code for p5.Vector.lerp
+    make each vertex a particle with velocity, edges
+    advanced project:
+        drag and drop demo
+        add hover effect
+        transfer drag and drop code into p5-bezier
+
  */
 
 // if I knew more javascript, this should probably inherit from p5.Vector?
@@ -43,6 +66,7 @@ class DraggableVertex {
 
     // x, y parameters are the coordinates of the mouse while dragging
     show(x, y) {
+        // where do I show this if it's being dragged?
         if (this.dragging) {
             this.v.x = x - this.offsetX
             this.v.y = y - this.offsetY
@@ -83,8 +107,10 @@ let points = []
 // d is the result of lerp between a, b
 // e is the result of lerp between b, c
 // f is the lerp between d and e
-let A, B, C // these are DraggableVertex objects that contain p5.Vector
-let d, e, f // these are p5.Vector objects
+let a, b, c, d // these are DraggableVertex objects that contain p5.Vector
+let ab, bc, cd // lerp points (p5.Vector) between main vertices
+let ab_bc, bc_cd // ab_bc is the lerp vertex between line segments ab and bc
+let draw_vertex // this is the vertex where the Bezier Curve is drawn from
 
 // list of DraggableVertices
 let draggableVertices
@@ -99,12 +125,9 @@ function setup() {
     background(0, 0, 30)
 
     // I didn't know we could initialize the value!!
-    mouseX = width/2
+    // mouseX = width/2
+    quadratic_setup()
 
-    A = new DraggableVertex(width/4, height/2)
-    B = new DraggableVertex(width/2, height/4)
-    C = new DraggableVertex(width*3/4, height/2)
-    draggableVertices = [A, B, C]
 }
 
 function draw() {
@@ -131,6 +154,13 @@ function mouseReleased() {
 }
 
 
+function quadratic_setup() {
+    a = new DraggableVertex(width/4, height/2)
+    b = new DraggableVertex(width/2, height/4)
+    c = new DraggableVertex(width*3/4, height/2)
+    draggableVertices = [a, b, c]
+}
+
 // encapsulates the visualization of our quadratic bezier curve
 function quadratic_example() {
     let bg = color(0, 0, 25)
@@ -154,18 +184,18 @@ function quadratic_example() {
     // let t = map(mouseX, 0, width, 0, 1)
     let t = abs(sin(frameCount * 0.01))
     let a, b, c // temporary p5.Vector variables to hold DraggableVertex
-    a = A.v
-    b = B.v
-    c = C.v
-    d = p5.Vector.lerp(a, b, t)
-    e = p5.Vector.lerp(b, c, t)
-    f = p5.Vector.lerp(d, e, t)
+    a = a.v
+    b = b.v
+    c = c.v
+    ab = p5.Vector.lerp(a, b, t)
+    bc = p5.Vector.lerp(b, c, t)
+    draw_vertex = p5.Vector.lerp(ab, bc, t)
 
     // draw lines first so they are underneathe the vertices
     // we want the blue 2nd order blue lerp line to be under the
     // 1st order gray lines
     stroke(200, 100, 80) // blue
-    line(d.x, d.y, e.x, e.y) // a line between d and e
+    line(ab.x, ab.y, bc.x, bc.y) // a line between d and e
 
     stroke(0, 0, 60) // gray
     line(a.x, a.y, b.x, b.y)
@@ -178,8 +208,8 @@ function quadratic_example() {
     // finally, draw all the vertex circles
     // blue vertices for d, e
     stroke(200, 100, 80)
-    circle(d.x, d.y, 10)
-    circle(e.x, e.y, 10)
+    circle(ab.x, ab.y, 10)
+    circle(bc.x, bc.y, 10)
 
     // draw a path for our curve. this should be 2nd highest in z-order
     // this has to come after vertices d and e to stay above them :P
@@ -196,12 +226,12 @@ function quadratic_example() {
 
     // these are the highest z-index values
     stroke(0, 0, 100) // white
-    circle(f.x, f.y, 12)
+    circle(draw_vertex.x, draw_vertex.y, 12)
 
     fill(bg)
-    A.show(mouseX, mouseY)
-    B.show(mouseX, mouseY)
-    C.show(mouseX, mouseY)
+    a.show(mouseX, mouseY)
+    b.show(mouseX, mouseY)
+    c.show(mouseX, mouseY)
 }
 
 // receives 3 points, and returns a point on the quadratic
