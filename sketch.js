@@ -26,7 +26,7 @@ goal: clone Freya's lerp animation https://youtu.be/aVwxzDHniEw?t=21
 
 add draggable vertices
 TODO: add "try dragging the white vertices" message
-TODO: add hover to DraggableVertices
+. add hover to DraggableVertices
 TODO: overlapping DraggableVertices should only drag top-most vertex
 
 done
@@ -53,7 +53,7 @@ version comments draft
 // if I knew more javascript, this should probably inherit from p5.Vector?
 // as is, I suppose we should return a vector and make sure there's no
 // mutability problems
-class DraggableVertex {
+class DraggableVertex /* extends p5.Vector */ {
     // contains a p5.Vector as its internal representation
     constructor(x, y) {
         this.v = new p5.Vector(x, y)
@@ -62,6 +62,7 @@ class DraggableVertex {
         this.offsetX = 0
         this.offsetY = 0
         this.dragging = false
+        this.hovering = false
     }
 
     // x, y parameters are the coordinates of the mouse while dragging
@@ -70,6 +71,15 @@ class DraggableVertex {
         if (this.dragging) {
             this.v.x = x - this.offsetX
             this.v.y = y - this.offsetY
+        }
+
+        // if the mouse is hovering over this vertex, "highlight" it
+        if (this.hovering) {
+            fill(0, 0, 66, 100)
+        } else {
+            // this needs to be the same as the canvas background
+            // and opaque too, because we don't want lines under it to show
+            fill(0, 0, 25)
         }
 
         stroke(0, 0, 100) // white
@@ -240,6 +250,26 @@ function mouseReleased() {
     draggableVertices.forEach(dv => dv.notPressed())
 }
 
+
+function mouseMoved() {
+    /*
+      we can check if we're mousing over any DraggableVertex here
+      on mouseMoved(), check contains:
+
+      foreach r in dvs:
+        if contains:
+            set hover to true
+        else set hover to false
+
+      in show(), fill transparent if hover is true
+     */
+
+    draggableVertices.forEach(dv => {
+        if (dv.contains(mouseX, mouseY))
+            dv.hovering = true
+        else dv.hovering = false
+    })
+}
 
 function quadratic_setup() {
     a = new DraggableVertex(width/4, height/2)
