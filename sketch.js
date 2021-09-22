@@ -57,7 +57,7 @@ class DraggableVertex {
     // contains a p5.Vector as its internal representation
     constructor(x, y) {
         this.v = new p5.Vector(x, y)
-        this.r = 5
+        this.r = 7
 
         this.offsetX = 0
         this.offsetY = 0
@@ -126,17 +126,102 @@ function setup() {
 
     // I didn't know we could initialize the value!!
     // mouseX = width/2
-    quadratic_setup()
-
+    // quadratic_setup()
+    cubic_setup()
 }
 
 function draw() {
-    quadratic_example()
+    // quadratic_example()
+
+    cubic_example()
+}
+
+function cubic_setup() {
+    a = new DraggableVertex(width/4, height*3/4)
+    b = new DraggableVertex(width/3, height/4)
+    c = new DraggableVertex(width*2/3, height/4)
+    d = new DraggableVertex(width*3/4, height*3/4)
+    draggableVertices = [a, b, c, d]
 }
 
 
 // encapsulates the visualization of a cubic bezier curve
 function cubic_example() {
+    let bg = color(0, 0, 25)
+    background(bg)
+    noFill()
+
+    // constrain our mouse to the canvas
+    mouseX = constrain(mouseX, 0, width)
+    mouseY = constrain(mouseY, 0, height)
+
+    // main time control for our bezier curve
+    // let t = map(mouseX, a.x, c.x, 0, 1)
+    // let t = map(mouseX, 0, width, 0, 1)
+    let t = abs(sin(frameCount * 0.01))
+
+    // calculate all lerp points for 1st, 2nd, and 3rd order lines
+    ab = p5.Vector.lerp(a.v, b.v, t)
+    bc = p5.Vector.lerp(b.v, c.v, t)
+    cd = p5.Vector.lerp(c.v, d.v, t)
+    ab_bc = p5.Vector.lerp(ab, bc, t)
+    bc_cd = p5.Vector.lerp(bc, cd, t)
+    draw_vertex = p5.Vector.lerp(ab_bc, bc_cd, t)
+
+    // 3rd order red lines
+    stroke(0, 100, 80) // red
+    line(ab_bc.x, ab_bc.y, bc_cd.x, bc_cd.y)
+
+    // 2nd order blue lines should be under the 1st order gray lines
+    // blue lines between {ab, bc}, {bc, cd}
+    stroke(200, 100, 80) // blue
+    line(ab.x, ab.y, bc.x, bc.y)
+    line(bc.x, bc.y, cd.x, cd.y)
+
+    // gray lines between {a, b}, {b, c}, {c, d}
+    stroke(0, 0, 60) // gray
+    line(a.v.x, a.v.y, b.v.x, b.v.y)
+    line(b.v.x, b.v.y, c.v.x, c.v.y)
+    line(c.v.x, c.v.y, d.v.x, d.v.y)
+
+    strokeWeight(2) // vertex strokeWeight
+    // a blue circle for each vertex d, e
+    fill(bg)
+
+    // finally, draw all the vertex circles
+
+    // blue vertices 2nd order lerp points
+    stroke(200, 100, 80)
+    circle(ab.x, ab.y, 10)
+    circle(bc.x, bc.y, 10)
+    circle(cd.x, cd.y, 10)
+
+    // red vertices
+    stroke(0, 100, 80) // red
+    circle(ab_bc.x, ab_bc.y, 10)
+    circle(bc_cd.x, bc_cd.y, 10)
+
+    // draw a path for our curve
+    strokeWeight(3)
+    stroke(0, 0, 100) // white
+    // s is the time value inside this loop, going from 0 up to t itself
+    for (let s=0; s<=t; s+=0.001) {
+        // f is our main drawing point for the quadratic bezier curve
+        // here, the v returned is equal to f
+        let v = cubic(a.v, b.v, c.v, d.v, s)
+        point(v.x, v.y)
+    }
+
+    fill(bg)
+    draggableVertices.forEach(dv => dv.show(mouseX, mouseY))
+
+    // these are the highest z-index values
+    stroke(0, 0, 100) // white
+    circle(draw_vertex.x, draw_vertex.y, 12)
+
+    // these are the highest z-index values
+    stroke(0, 0, 100) // white
+    // circle(draw_vertex.x, draw_vertex.y, 12)
 
 }
 
@@ -145,9 +230,11 @@ function test() {
     console.log("test")
 }
 
+
 function mousePressed() {
     draggableVertices.forEach(dv => dv.pressed(mouseX, mouseY))
 }
+
 
 function mouseReleased() {
     draggableVertices.forEach(dv => dv.notPressed())
@@ -191,7 +278,7 @@ function quadratic_example() {
     bc = p5.Vector.lerp(b, c, t)
     draw_vertex = p5.Vector.lerp(ab, bc, t)
 
-    // draw lines first so they are underneathe the vertices
+    // draw lines first so they are underneath the vertices
     // we want the blue 2nd order blue lerp line to be under the
     // 1st order gray lines
     stroke(200, 100, 80) // blue
@@ -243,8 +330,6 @@ function quadratic(p0, p1, p2, t) {
     let y2 = lerp(p1.y, p2.y, t)
     let x = lerp(x1, x2, t)
     let y = lerp(y1, y2, t)
-
-    // line(x1, y1, x2, y2)
     return new p5.Vector(x, y)
 }
 
@@ -254,7 +339,5 @@ function cubic(p0, p1, p2, p3, t) {
     let v2 = quadratic(p1, p2, p3, t)
     let x = lerp(v1.x, v2.x, t)
     let y = lerp(v1.y, v2.y, t)
-
-    line(v1.x, v1.y, v2.x, v2.y)
     return new p5.Vector(x, y)
 }
